@@ -1,0 +1,108 @@
+name: Do release
+
+on:
+  pull_request:
+    branches: main
+    types: [closed]
+
+jobs:
+  get-description:
+    name: Get version and description from the CHANGELOG.md and overview.txt files
+    uses: $/.github/workflows/create_release_description.yml
+
+  tag-release:
+    name: Mark the release in git
+    needs: [get-description]
+    runs-on: ubuntu-slim
+    if: ${{ github.event.pull_request.merged }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          # This contains the private key corresponding to a public key that has been
+          # registered as a deploy key, and which has been exempted from branch
+          # prediction, so that we can merge main back into develop without a PR.
+          ssh-key: ${{ secrets.RELEASE_KEY }}
+
+      - name: Tag the released version with a version tag
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git tag -a -m "Release ${{ needs.get-description.outputs.version }}" "v${{ needs.get-description.outputs.version }}" "${{ github.event.pull_request.merge_commit_sha }}"
+          git push --tags
+
+      - name: Merge main back into develop
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git fetch --all
+          git switch develop
+          git merge --no-ff -X theirs main
+          git push
+
+  publish-on-github:
+    name: Make a GitHub release
+    needs: [get-description, tag-release]
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6
+
+      - name: Make a GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ needs.get-description.outputs.version }}
+          name: Capsuli ${{ needs.get-description.outputs.version }}
+          body: ${{ fromJSON(needs.get-description.outputs.description) }}
+
+  build-python-packages:
+    name: Build and test Python packages
+    needs: [get-description, tag-release]
+    uses: $/.github/workflows/build_test_python_packages.yml
+    with:
+      ref: v${{ needs.get-description.outputs.version }}
+
+  publish-to-testpypi:
+    name: Publish to TestPyPI
+    if: false
+    needs: [build-python-packages]
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/capsuli
+    permissions:
+      id-token: write
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  publish-to-pypi:
+    name: Publish to PyPI
+    needs: [build-python-packages]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/capsuli
+    permissions:
+      id-token: write
+    steps:
+    - name: Download packages
+      uses: actions/download-artifact@v8
+      with:
+        name: python-package-distributions
+        path: dist/
+
+    - name: Publish packages to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+

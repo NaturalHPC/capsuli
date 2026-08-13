@@ -1,0 +1,147 @@
+# see documentation, e.g.
+# - https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#declaring-project-metadata
+# - https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+# - https://www.python.org/dev/peps/pep-0621/
+
+[build-system]
+requires = ["setuptools>=64.0.0", "setuptools-scm[simple]", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "capsuli"
+description = "A library for starting and managing processes locally and on HPC clusters"
+authors = [
+    { name = "Lourens Veen", email = "l.veen@esciencecenter.nl" }
+]
+keywords = ["HPC","processes","monitoring"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+readme = {file = "README.md", content-type = "text/markdown"}
+
+dynamic = ["version"]
+requires-python = ">=3.10"
+dependencies = ["psutil", "typing_extensions"]
+
+[project.optional-dependencies]
+dev = [
+    "build",  # build is not only used in publishing (below), but also in the template's test suite
+    "coverage [toml]",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "sphinx-autoapi",
+    "tox",
+]
+
+[project.urls]
+Repository = "https://github.com/NaturalHPC/capsuli"
+Issues = "https://github.com/NaturalHPC/capsuli/issues"
+Changelog = "https://github.com/NaturalHPC/capsuli/CHANGELOG.md"
+ReadTheDocs = "https://capsuli.readthedocs.io"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["src/**/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/capsuli"]
+command_line = "-m pytest"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py310,py311,py312,py313,py314
+skip_missing_interpreters = true
+
+[gh]
+python =
+    3.10 = py310
+    3.11 = py311
+    3.12 = py312
+    3.13 = py313
+    3.14 = py314
+
+[testenv]
+pass_env = CI
+commands =
+    pytest --cov --cov-report=term-missing {posargs}
+    ruff check
+    ruff format --check
+extras = dev
+
+[testenv:docs]
+description = Build documentation using Sphinx
+basepython = python3
+deps =
+    myst_parser
+    pytest
+    recommonmark
+    sphinx
+    sphinx_autoapi
+    sphinx_rtd_theme
+commands = sphinx-build -b html docs/source docs/_build
+"""
+
+[tool.ruff]
+line-length = 88
+output-format = "concise"
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+select = ["ALL"]
+ignore = [
+    "ANN204", # Missing return type annotation for special (dunder) method
+    "ANN401", # Use of Any (I don't use Any unless necessary)
+    "COM812", # Missing trailing comma
+    "CPY001", # Missing copyright notice in every file
+    "FBT",    # Using boolean function arguments
+    "TD",     # TODOs
+    "TRY",    # Exception handling (Too many false positives)
+    "PERF",   # Micro-optimisation (No premature optimisation)
+    "EM",     # String literal in exception (not worth the extra code)
+    "FIX001", # Resolve FIXMEs
+    "FIX002", # Resolve TODOs
+    # No docstrings required in the following cases
+    "D100", # Missing module docstring
+    "D104", # Missing public package docstring
+    "D105", # Missing docstring in magic method
+    "S101", # Use of assert (We use it only to help the type checker)
+    "S311", # Consider pseudo-RNG suspicious (False positives)
+    "BLE001", # Blind exceptions (Can't know which exceptions will be thrown in Python)
+    "PLR0912", # Too many branches (Doesn't actually measure complexity)
+    "C901", # Complex structure (Doesn't actually measure complexity)
+]
+pydocstyle.convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests can ignore a few extra rules
+"**/tests/**.py" = [
+    "ARG001", # Unused function argument (False positive on fixtures)
+    "PLR2004", # Unnamed numerical constants (ok in tests)
+    "S101",   # Use of assert is detected
+    "SLF001", # Private member accessed
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["capsuli"]
+force-single-line = true
+no-lines-before = ["future","standard-library","third-party","first-party","local-folder"]
+
