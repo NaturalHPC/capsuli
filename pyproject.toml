@@ -46,6 +46,14 @@ dev = [
     "sphinx-autoapi",
     "tox",
 ]
+docs = [
+    "myst_parser",
+    "pytest",
+    "recommonmark",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "sphinx-autoapi",
+]
 
 [project.urls]
 Repository = "https://github.com/NaturalHPC/capsuli"

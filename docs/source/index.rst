@@ -9,6 +9,7 @@ Capsuli
   :caption: Contents:
 
   tutorial
+  developing
 
 Indices and tables
 ==================
