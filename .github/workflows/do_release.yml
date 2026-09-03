@@ -65,28 +65,6 @@ jobs:
     with:
       ref: v${{ needs.get-description.outputs.version }}
 
-  publish-to-testpypi:
-    name: Publish to TestPyPI
-    if: false
-    needs: [build-python-packages]
-    runs-on: ubuntu-latest
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/capsuli
-    permissions:
-      id-token: write
-    steps:
-      - name: Download packages
-        uses: actions/download-artifact@v8
-        with:
-          name: python-package-distributions
-          path: dist/
-
-      - name: Publish packages to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-
   publish-to-pypi:
     name: Publish to PyPI
     needs: [build-python-packages]
