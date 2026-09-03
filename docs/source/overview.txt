@@ -1,0 +1,2 @@
+Capsuli is the Cluster Allocation Process SUpervision LIbrary. It scans available compute resources and returns a description of them, then lets you select a subset and start a program on that subset. Programs can be single- or multithreaded, or MPI parallel. Processes are monitored, output can be redirected, and exit status is recorded. Works locally and inside a Slurm allocation
+

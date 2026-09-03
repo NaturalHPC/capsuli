@@ -1,0 +1,27 @@
+# Required
+version: 2
+
+# Set OS and Python version and accomodate setuptools-scm
+build:
+  os: ubuntu-lts-latest
+  tools:
+    python: "3.14"
+  jobs:
+    # https://github.com/readthedocs/readthedocs.org/issues/10715
+    post_checkout:
+      - git fetch --tags
+    pre_install:
+      - git update-index --assume-unchanged docs/source/conf.py
+
+# Install the package before building so we can get the version and dependencies
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
+
+# Build documentation in the "docs/" directory with Sphinx
+sphinx:
+   configuration: docs/source/conf.py
+
