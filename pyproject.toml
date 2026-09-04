@@ -32,7 +32,7 @@ readme = {file = "README.md", content-type = "text/markdown"}
 
 dynamic = ["version"]
 requires-python = ">=3.10"
-dependencies = ["psutil", "typing_extensions"]
+dependencies = ["msgpack", "nelambu", "psutil", "typing_extensions"]
 
 [project.optional-dependencies]
 dev = [
@@ -135,6 +135,7 @@ ignore = [
     "S311", # Consider pseudo-RNG suspicious (False positives)
     "BLE001", # Blind exceptions (Can't know which exceptions will be thrown in Python)
     "PLR0912", # Too many branches (Doesn't actually measure complexity)
+    "PLW1641", # Eq without hash (Nothing wrong with that)
     "C901", # Complex structure (Doesn't actually measure complexity)
 ]
 pydocstyle.convention = "google"
@@ -143,6 +144,7 @@ pydocstyle.convention = "google"
 # Tests can ignore a few extra rules
 "**/tests/**.py" = [
     "ARG001", # Unused function argument (False positive on fixtures)
+    "D103", # Docstrings may be omitted in test functions
     "PLR2004", # Unnamed numerical constants (ok in tests)
     "S101",   # Use of assert is detected
     "SLF001", # Private member accessed
